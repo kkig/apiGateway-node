@@ -1,14 +1,16 @@
 const express = require('express');
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
-
-// if (process.env.NODE_ENV !== 'production') {
-//   require('dotenv').config();
-// }
+const cors = require('cors');
+const helmet = require('helmet');
 
 const winston = require('winston');
 const expressWinston = require('express-winston');
 const responseTime = require('response-time');
+
+// if (process.env.NODE_ENV !== 'production') {
+//   require('dotenv').config();
+// }
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -32,12 +34,17 @@ app.use(
   })
 );
 
+// Rate limit
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // 5 calls
   })
 );
+
+// Security
+app.use(cors());
+app.use(helmet());
 
 const protect = (req, res, next) => {
   const {authenticated} = req.session;
