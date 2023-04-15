@@ -17,6 +17,8 @@ const port = process.env.PORT || 3000;
 const secret = process.env.SESSION_SECRET;
 const store = new session.MemoryStore();
 
+const {createProxyMiddleware} = require('http-proxy-middleware');
+
 // Logging
 app.use(responseTime());
 
@@ -43,7 +45,7 @@ app.use(
 );
 
 // Security
-app.use(cors());
+// app.use(cors());
 app.use(helmet());
 
 const protect = (req, res, next) => {
@@ -63,6 +65,18 @@ app.use(
     resave: false,
     saveUninitialized: true,
     store,
+  })
+);
+
+// Proxy for forwarding to microservice
+app.use(
+  '/search',
+  createProxyMiddleware({
+    target: 'http://api.duckduckgo.com/',
+    changeOrigin: true,
+    pathRewrite: {
+      [`^/search`]: '',
+    },
   })
 );
 
