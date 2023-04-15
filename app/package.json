@@ -1,0 +1,19 @@
+{
+  "name": "api-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node -r dotenv/config index.js",
+    "dev:log": "DEBUG=* node -r dotenv/config index.js",
+    "dev:log-exp": "DEBUG=express:router* node -r dotenv/config index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  }
+}
