@@ -1,5 +1,7 @@
 const express = require('express');
+
 const session = require('express-session');
+const rateLimit = require('express-rate-limit');
 
 // if (process.env.NODE_ENV !== 'production') {
 //   require('dotenv').config();
@@ -9,6 +11,14 @@ const app = express();
 const port = process.env.PORT || 3000;
 const secret = process.env.SESSION_SECRET;
 const store = new session.MemoryStore();
+
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 calls
+  })
+);
+
 const protect = (req, res, next) => {
   const {authenticated} = req.session;
   console.log(req.session);
