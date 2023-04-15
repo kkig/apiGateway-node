@@ -1,5 +1,4 @@
 const express = require('express');
-
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
 
@@ -7,10 +6,31 @@ const rateLimit = require('express-rate-limit');
 //   require('dotenv').config();
 // }
 
+const winston = require('winston');
+const expressWinston = require('express-winston');
+const responseTime = require('response-time');
+
 const app = express();
 const port = process.env.PORT || 3000;
 const secret = process.env.SESSION_SECRET;
 const store = new session.MemoryStore();
+
+// Logging
+app.use(responseTime());
+
+app.use(
+  expressWinston.logger({
+    transports: [new winston.transports.Console()],
+    format: winston.format.json(),
+    statusLevels: true,
+    meta: false,
+    msg: 'HTTP {{req.method}} {{req.url}} {{req.statusCode}} {{res.responseTime}}ms',
+    expressFormat: true,
+    ignoredRoutes() {
+      return false;
+    },
+  })
+);
 
 app.use(
   rateLimit({
