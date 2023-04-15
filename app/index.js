@@ -3,6 +3,7 @@ const session = require('express-session');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const helmet = require('helmet');
+const config = require('./config');
 
 const winston = require('winston');
 const expressWinston = require('express-winston');
@@ -13,40 +14,16 @@ const responseTime = require('response-time');
 // }
 
 const app = express();
-const port = process.env.PORT || 3000;
-const secret = process.env.SESSION_SECRET;
+const port = config.serverPort;
+const secret = config.sessionSecret;
 const store = new session.MemoryStore();
 
 const {createProxyMiddleware} = require('http-proxy-middleware');
 
-// Logging
-app.use(responseTime());
-
-app.use(
-  expressWinston.logger({
-    transports: [new winston.transports.Console()],
-    format: winston.format.json(),
-    statusLevels: true,
-    meta: false,
-    msg: 'HTTP {{req.method}} {{req.url}} {{req.statusCode}} {{res.responseTime}}ms',
-    expressFormat: true,
-    ignoredRoutes() {
-      return false;
-    },
-  })
-);
-
-// Rate limit
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 calls
-  })
-);
-
 // Security
-// app.use(cors());
-app.use(helmet());
+const alwaysAllow = (_1, _2, next) => {
+  next();
+};
 
 const protect = (req, res, next) => {
   const {authenticated} = req.session;
@@ -59,6 +36,29 @@ const protect = (req, res, next) => {
   }
 };
 
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(responseTime());
+
+// Logging
+app.use(
+  expressWinston.logger({
+    transports: [new winston.transports.Console()],
+    format: winston.format.json(),
+    statusLevels: true,
+    meta: false,
+    level: 'debug',
+    msg: 'HTTP {{req.method}} {{req.url}} {{req.statusCode}} {{res.responseTime}}ms',
+    expressFormat: true,
+    ignoredRoutes() {
+      return false;
+    },
+  })
+);
+
+app.use(cors());
+app.use(rateLimit(config.rate));
+
 app.use(
   session({
     secret,
@@ -67,23 +67,6 @@ app.use(
     store,
   })
 );
-
-// Proxy for forwarding to microservice
-app.use(
-  '/search',
-  createProxyMiddleware({
-    target: 'http://api.duckduckgo.com/',
-    changeOrigin: true,
-    pathRewrite: {
-      [`^/search`]: '',
-    },
-  })
-);
-
-app.get('/', (req, res) => {
-  const {name = 'user'} = req.query;
-  res.send(`Hello ${name}!`);
-});
 
 app.get('/login', (req, res) => {
   const {authenticated} = req.session;
@@ -102,9 +85,22 @@ app.get('/logout', protect, (req, res) => {
   });
 });
 
-app.get('/protected', protect, (req, res) => {
-  const {name = 'user'} = req.query;
-  res.send(`Hello ${name}!`);
+Object.keys(config.proxies).forEach((path) => {
+  const {protected, ...options} = config.proxies[path];
+  const check = protected ? protect : alwaysAllow;
+
+  app.use(path, check, createProxyMiddleware(options));
+});
+
+// Error pages
+app.use((req, res, next) => {
+  console.log('Route not found.');
+  next(new Error('Not found'));
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(404).send({status: 404, message: 'Not found!'});
 });
 
 app.listen(port, () => {
