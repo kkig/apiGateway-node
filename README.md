@@ -1,6 +1,6 @@
 ## API Gateway with Node
 
-Example API Gateway with Node.
+Example API Gateway with Node. Setting up API Gateway between client and server can improve security. For complex applications, you can set up more than one API Gateway. For more details, please read [this article](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/architect-microservice-container-applications/direct-client-to-microservice-communication-versus-the-api-gateway-pattern).
 
 ### API
 
