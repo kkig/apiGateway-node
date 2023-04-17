@@ -1,0 +1,6 @@
+services:
+  app:
+    build: profile
+    container_name: service01-app-1
+    ports:
+      - 8080:8080

@@ -18,4 +18,12 @@ exports.proxies = {
       [`^/search`]: '',
     },
   },
+  '/pokemon': {
+    protected: false,
+    target: 'http://localhost:8080/name',
+    changeOrigin: true,
+    pathRewrite: {
+      [`^/pokemon`]: '',
+    },
+  },
 };

@@ -1,2 +1,4 @@
-app/.env
-app/node_modules 
+gateway/.env
+gateway/node_modules 
+
+apis/service01/profile/node_modules
